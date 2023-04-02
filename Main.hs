@@ -114,4 +114,4 @@ play = do
   return ()
 
 main :: IO ()
-main = save outputFilePath
+main = play

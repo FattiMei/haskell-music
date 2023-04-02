@@ -1,0 +1,2 @@
+play:
+	runghc Main.hs
