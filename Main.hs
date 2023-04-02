@@ -30,17 +30,15 @@ pitchStandard = 440.0
 f :: Semitones -> Hz
 f n = pitchStandard * (2 ** (1.0 / 12.0)) ** n
 
+
+generaArmonico :: Float -> Hz
+generaArmonico n = if (n >= 2.0) then generaArmonico (n / 2.0) else n
+
 freq :: Hz -> Seconds -> [Pulse]
 freq hz duration =
-  map (* volume) $ zipWith3 (\x y z -> x * y * z) release attack output
+  map (* volume) output
   where
     step = (hz * 2 * pi) / sampleRate
-
-    attack :: [Pulse]
-    attack = map (min 1.0) [0.0,0.001 ..]
-
-    release :: [Pulse]
-    release = reverse $ take (length output) attack
 
     output :: [Pulse]
     output = map sin $ map (* step) [0.0 .. sampleRate * duration]
@@ -51,8 +49,12 @@ arpeggio = concat [ freq pitchStandard 2.0
 				  , freq (pitchStandard * 1.5) 2.0
 				  ]
 
+
+armonici :: [Pulse]
+armonici = concat $ map (\f -> freq f 2.0) $ map (* pitchStandard) $ sort $ Data.List.nub $ map generaArmonico [1..20]
+
 save :: FilePath -> IO ()
-save filePath = B.writeFile filePath $ B.toLazyByteString $ fold $ map B.floatLE arpeggio
+save filePath = B.writeFile filePath $ B.toLazyByteString $ fold $ map B.floatLE armonici
 
 play :: IO ()
 play = do
